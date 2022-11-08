@@ -18,15 +18,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let table_name = var("METEO_TABLE").unwrap_or("none".to_string());
     println!("Updating table {}", table_name);
 
-    for place in places {
+    let lt_places = places
+        .into_iter()
+        .filter(|place| String::from(&place.countryCode).eq_ignore_ascii_case("LT"));
+
+    for place in lt_places {
         let sleep_duration = Duration::from_millis(400);
         //TODO: Remove this
         sleep(sleep_duration);
         println!("Calling {}", place.code);
         let req = client.put_item().table_name(String::from(&table_name));
         let detailed_place = call_place(place.code).await?;
-        let resp = &req
-            .item("code", to_dynamodb(detailed_place.code))
+        req.item("code", to_dynamodb(detailed_place.code))
             .item("name", to_dynamodb(detailed_place.name))
             .item("country", to_dynamodb(detailed_place.country))
             .item("countryCode", to_dynamodb(detailed_place.countryCode))
